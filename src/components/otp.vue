@@ -22,8 +22,9 @@
 	}
 
 	const otpCont = ref<null | { children: HTMLElement[]; }>(null);
+	const emit = defineEmits(['update:otp', 'error:otp']);
 
-	const emit = defineEmits(['update:otp']);
+	let showValidationError = false;
 
 	const handleKeyDown = (event: KeyboardEvent, index: number) => {
 		if (event.key !== 'Tab' && event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') {
@@ -48,6 +49,20 @@
 
 		emit('update:otp', digits.join(''));
 	};
+
+	const handleFocusOut = (event: FocusEvent) => {
+		const target = event.target as HTMLInputElement;
+
+		if (!showValidationError && target.value === '') {
+			showValidationError = true;
+		}
+
+		if (showValidationError && target.value !== '') {
+			showValidationError = false;
+		}
+
+		emit('error:otp', showValidationError);
+	};
 </script>
 
 <template>
@@ -58,8 +73,10 @@
 			maxlength='1'
 			v-for='(el, ind) in digits'
 			v-model='digits[ind]'
+			@focusout='handleFocusOut($event)'
 			@keydown='handleKeyDown($event, ind)'
-			:key='el.charAt(ind)+ind'
+			:class='{error: digits[ind] === ""}'
+			:key='digits[ind].toString() + ind'
 			:autofocus='ind === 0'
 			:placeholder='(ind + 1).toString()'
 		/>
@@ -80,5 +97,9 @@
 
 	.digit-box:focus {
 		outline: 3px solid black;
+	}
+
+	.error {
+		border-color: red;
 	}
 </style>
